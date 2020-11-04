@@ -1,0 +1,179 @@
+<!doctype html public "-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>排序</title>
+<style type="text/css">
+body{font-size:12px;margin:0;padding:0;}
+.clearfix{zoom:0;}
+.clearfix:after{content:'.';display:block;visibility:hidden;clear:both;height:0px;}
+#mysort{width:80%;float:left;margin:10px;}
+.select,.list{background:#fff;width:100%;margin:0;padding:0;}
+.select li{list-style:none;width:100%;border-bottom:1px dashed #999;padding:8px 2px;float:left;}
+.select li em{float:left;display:block;font-style:normal;padding:2px 5px;margin:5px 2px;}
+.select li a{float:left;display:block;padding:2px 5px;background:#fff;color:#000;cursor:pointer;margin:5px 0 5px 5px;}
+.select li a.on{background:#B13333;color:#fff;}
+.list li{list-style:none;width:100%;padding:10px;float:left;}
+.title{float:left;width:70%;padding-left:10px;}
+.datetime{float:left;}
+.sort{cursor:pointer;}
+.dl{float:left;width:100%;padding:8px 2px;background:#ccc;}
+</style>
+</head>
+<body>
+<div id="mysort">
+	<ul class="select">
+		<li id="region"><a>所有</a><em>：</em><a>主院</a><a>别院</a><a>城市</a></li>
+		<li id="mode"><a>所有</a><em>：</em><a>发表</a><a>回复</a></li>
+	</ul>
+	<div class="dl"><div class="title">主题</div><div class="datetime">时间 <a class="sort">↓</a></div></div>
+	<ul class="list"></ul>
+</div>
+</body>
+<script type="text/javascript">
+var bind = function(obj,func){
+	return function(){
+		func.apply(obj,arguments);
+	};
+};
+var get=function(className, tag ,root) {
+        if(arguments.length==1){
+        	root = (arguments[0]) ? (typeof arguments[0]=="string")?document.getElementById(arguments[0]):arguments[0] : null || document;
+        	return root;
+        }
+        root = (root) ? (typeof root=="string")?document.getElementById(root):root : null || document; 
+        if (!root) {return [];}
+        var nodes = [],elements = root.getElementsByTagName(tag);
+        for (var i = 0, len = elements.length; i < len; ++i) {
+        	if(elements[i].className==className||className=="*"){
+                nodes[nodes.length] = elements[i];
+            }
+        }
+        return nodes;
+}
+var addEventHandler=function(obj, type, func) {
+		if(!obj){return;}
+		var doOn=function(o){
+			if(o.addEventListener){o.addEventListener(type, func, false);}
+			else if(o.attachEvent){o.attachEvent("on" + type, func);}
+			else{o["on" + type] = func;}
+		}
+		var IsArray=function(v){ 
+			try{ 
+				var a = v[0]; 
+				return typeof(a) != "undefined"; 
+			}catch(e){ 
+				return false; 
+			} 
+		}
+		if(obj.tagName!='SELECT'&&IsArray(obj)){
+			for(var i=0,oLen=obj.length;i<oLen;i++){
+				doOn(obj[i],type.func);
+			}
+		}else{
+			doOn(obj);
+		}
+};
+var mySort=function(id){
+	this.select=get('select','ul',id)[0];
+	this.table=get('list','ul',id)[0];
+	this.list=get('*','a',this.select);
+	this.sort=get('sort','a',id)[0];
+	this.format=function(arr,type,keys){
+	    switch (type){ 
+	      case 0:return arr.sort(function(a,b){a=(keys)?(a[keys])?a[keys]:a:a;b=(keys)?(b[keys])?b[keys]:b:b; return a>b?-1:(a>b)?0:1; }); break; 
+	      case 1:return arr.sort(function(a,b){a=(keys)?(a[keys])?a[keys]:a:a;b=(keys)?(b[keys])?b[keys]:b:b; return a<b?-1:(a<b)?0:1; }); break; 
+	      default:return arr.sort(function(a,b){a=(keys)?(a[keys])?a[keys]:a:a;b=(keys)?(b[keys])?b[keys]:b:b; return a>b?-1:(a>b)?0:1; }); break; 
+	     }
+	}
+	this.getEvent=function(e){
+		var event=e||window.event;
+		if(event){return event.srcElement||event.target;}
+	};
+	return this;
+}
+mySort.prototype = {
+	create:function(node){
+		var oFrag=document.createDocumentFragment(),dTime,dTitle,dLi;
+		for(var i=0,nLen=node.length;i<nLen;i++){
+			dTime=document.createElement('div');
+			dTime.className='datetime';
+			dTime.innerHTML=node[i].datetime;
+			dTitle=document.createElement('div');
+			dTitle.className='title';
+			dTitle.innerHTML=node[i].title;
+			dLi=document.createElement('li');
+			dLi.appendChild(dTitle);
+			dLi.appendChild(dTime);
+			oFrag.appendChild(dLi);
+			dTime=dTitle=dLi=null;
+		}
+		this.table.innerHTML='';
+		this.table.appendChild(oFrag);
+		oFrag=dTime=null;
+	},
+	FullData:function(){
+		var data=[{"region":"主院","title":1,"datetime":"2009-08-10 10:23:35","mode":"发表"},
+	   {"region":"城市","title":4,"datetime":"2009-08-10 10:23:32","mode":"发表"},
+	   {"region":"别院","title":3,"datetime":"2009-08-10 10:23:33","mode":"回复"},
+	   {"region":"主院","title":2,"datetime":"2009-08-10 10:23:34","mode":"发表"},
+	   {"region":"城市","title":5,"datetime":"2009-08-10 10:23:31","mode":"回复"}
+		];
+		return data;
+	},
+	strip:function(newData,matchData,m){
+		var tmpData=[];
+		if(matchData.length>0&&matchData[0]!='所有'){
+			for(var i=0,dlen=newData.length;i<dlen;i++){
+				for(var j=0,rLen=matchData.length;j<rLen;j++){
+					if(matchData[j].innerHTML==newData[i][m]||matchData[j].innerHTML=='所有'){
+						tmpData.push(newData[i]);
+					}
+				}
+			}
+			newData=tmpData;
+			tmpData=[];
+		}
+		return newData;
+	},
+	require:function(){
+		var tmpData=[],
+			region=get('on','a','region'),
+			mod=get('on','a','mode');
+		var _data=this.FullData(),nData,t;
+		t=(this.sort.innerHTML=="↓")?0:1;
+		nData=this.format(_data,t,'datetime');
+		nData=this.strip(nData,region,'region');
+		nData=this.strip(nData,mod,'mode');
+		this.table.innerHTML='loading...';
+		setTimeout(bind(this,function(){this.create(nData)}),1000);
+	},
+	order:function(e){
+		var target=this.getEvent(e);
+		target.innerHTML=(target.innerHTML=='↓')?'↑':'↓';
+		this.require();
+	},
+
+	doLight:function(e){
+		var target=this.getEvent(e);
+		var inner=target.innerHTML,selAll=target.parentNode.getElementsByTagName('a');
+		if(inner=='所有'){
+			for(var i=0,olen=selAll.length;i<olen;i++){
+				if(selAll[i].innerHTML==inner){selAll[i].className=(selAll[i].className=='')?'on':'';}
+				else{selAll[i].className='';}
+			}
+		}else{
+			if(selAll[0].className=='on'){selAll[0].className='';}
+			target.className=(target.className=='')?'on':'';
+		}
+		this.require();
+	},
+	init:function(e){
+		addEventHandler(window,'load',bind(this,this.require));
+		addEventHandler(this.list,'click',bind(this,this.doLight));
+		addEventHandler(this.sort,'click',bind(this,this.order));
+	}
+};
+var sort=new mySort('mysort').init();
+</script>
+</html>
